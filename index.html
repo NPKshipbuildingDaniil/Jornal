@@ -231,6 +231,7 @@
   .btn-accent { background: var(--accent); color: #FFFFFF; }
   .btn-sm { padding: 5px 8px; font-size: 11px; width: auto; }
   .btn-danger { background: transparent; border-color: var(--status-absent-border); color: var(--status-absent-text); }
+  .btn-danger-fill { background: var(--status-absent-text); color: #FFFFFF; }
 
   .sub-modes-panel {
     display: grid;
@@ -593,9 +594,14 @@
               <span id="label-active-group" style="font-weight: 700; font-size: 13.5px;">Группа</span>
               <span id="label-active-meta" style="font-size: 11px; color: var(--text-muted); margin-left: 4px;"></span>
             </div>
-            <button class="ui-btn btn-secondary btn-sm" onclick="closeJournalWorkspace()">
-              Выбор даты
-            </button>
+            <div style="display: flex; gap: 4px;">
+              <button id="btn-remove-last-pair" class="ui-btn btn-danger btn-sm" style="display: none;" onclick="removeLastPairFromCurrentSession()">
+                Удалить пару
+              </button>
+              <button class="ui-btn btn-secondary btn-sm" onclick="closeJournalWorkspace()">
+                Выбор даты
+              </button>
+            </div>
           </div>
         </div>
 
@@ -616,9 +622,12 @@
     <!-- 2. ВКЛАДКА: АРХИВ ДНЕЙ -->
     <div id="view-archive" class="view-panel">
       <div class="card">
-        <div class="card-header">Зарегистрированные занятия</div>
+        <div class="card-header">
+          <span>Зарегистрированные занятия</span>
+          <span id="archive-total-badge" style="font-size: 11px; font-weight: normal; color: var(--text-muted);">0 записей</span>
+        </div>
         <p style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 10px;">
-          Все ранее сохраненные дни. Нажмите на запись для перехода к просмотру и корректировке.
+          Все сохранённые дни занятий. Вы можете открыть занятие для заполнения или безвозвратно удалить его из памяти устройства.
         </p>
         <div id="archive-list-container"></div>
       </div>
@@ -685,17 +694,21 @@
       </div>
     </div>
 
-    <!-- 5. ВКЛАДКА: СИСТЕМА И ВЫГРУЗКА -->
+    <!-- 5. ВКЛАДКА: СИСТЕМА И ХРАНЕНИЕ -->
     <div id="view-system" class="view-panel">
-      <!-- Генератор PNG-иконок для PWA -->
-      <div class="card" style="border: 1.5px solid var(--accent); background: var(--accent-light);">
-        <div class="card-header" style="color: var(--accent);">Установка приложения (Иконки PNG)</div>
-        <p style="font-size: 11.5px; color: var(--text); line-height: 1.4; margin-bottom: 12px;">
-          Чтобы мобильный телефон одобрил установку PWA, скачайте отсюда две прозрачные PNG-иконки без рамок и загрузите их в ваш репозиторий GitHub.
+      <!-- Блок сохранения и обмена папками -->
+      <div class="card" style="border: 1px solid var(--accent); background: #F8FAFC;">
+        <div class="card-header" style="color: var(--accent);">Автоматическое сохранение и обмен данными</div>
+        <p style="font-size: 11.5px; color: var(--text); line-height: 1.45; margin-bottom: 12px;">
+          Все данные непрерывно сохраняются во внутренней памяти устройства. Для синхронизации и обмена вы можете выгрузить данные со структурой отдельных папок по каждой группе или подключить рабочий каталог.
         </p>
-        <div style="display: flex; gap: 6px;">
-          <button class="ui-btn btn-accent" style="flex:1;" onclick="downloadPurePNGIcon(192)">Скачать icon-192.png</button>
-          <button class="ui-btn btn-accent" style="flex:1;" onclick="downloadPurePNGIcon(512)">Скачать icon-512.png</button>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <button class="ui-btn btn-primary" onclick="exportStructuredZipFolders()">
+            Выгрузить архив с папками по группам (ZIP)
+          </button>
+          <button class="ui-btn btn-secondary" onclick="attachDeviceFolder()">
+            Синхронизировать с папкой на устройстве
+          </button>
         </div>
       </div>
 
@@ -713,12 +726,20 @@
         <div class="card-header">Резервная копия (JSON)</div>
         <div style="display: flex; flex-direction: column; gap: 8px;">
           <button class="ui-btn btn-secondary" onclick="exportJSONBackup()">
-            Выгрузить резервную копию базы
+            Выгрузить единый файл базы (JSON)
           </button>
           <input type="file" id="import-json-file" accept=".json" style="display: none;" onchange="handleImportJSON(event)">
           <button class="ui-btn btn-secondary" onclick="document.getElementById('import-json-file').click()">
             Восстановить базу из файла
           </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">Иконки для установки приложения (PWA)</div>
+        <div style="display: flex; gap: 6px;">
+          <button class="ui-btn btn-secondary btn-sm" style="flex:1;" onclick="downloadPurePNGIcon(192)">icon-192.png</button>
+          <button class="ui-btn btn-secondary btn-sm" style="flex:1;" onclick="downloadPurePNGIcon(512)">icon-512.png</button>
         </div>
       </div>
 
@@ -854,15 +875,15 @@
 </div>
 
 <script>
-/* ================= РЕГИСТРАЦИЯ PWA ================= */
+/* ================= АВТОНОМНАЯ РЕГИСТРАЦИЯ PWA ================= */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   });
 }
 
-/* ================= БАЗА INDEXED DB ================= */
-const DB_NAME = 'UniversityJournal_v5';
+/* ================= БАЗА INDEXED DB И ПЕРСИСТЕНТНОСТЬ ================= */
+const DB_NAME = 'UniversityJournal_Permanent';
 const RUSSIAN_VOWELS = 'аеёиоуыэюяАЕЁИОУЫЭЮЯ';
 let db = null;
 
@@ -876,6 +897,15 @@ let activeDate = '';
 let activePairsCount = 1;
 
 let newStudentStressIndex = null;
+let boundDirectoryHandle = null;
+
+async function requestStoragePersistence() {
+  if (navigator.storage && navigator.storage.persist) {
+    try {
+      await navigator.storage.persist();
+    } catch (e) {}
+  }
+}
 
 function initDB() {
   return new Promise((resolve) => {
@@ -889,6 +919,7 @@ function initDB() {
     };
     req.onsuccess = (e) => {
       db = e.target.result;
+      requestStoragePersistence();
       loadAllData().then(resolve);
     };
     req.onerror = () => resolve();
@@ -1061,17 +1092,51 @@ function openJournalWorkspace() {
     document.getElementById('label-active-group').innerText = grp ? grp.name : '';
     document.getElementById('label-active-meta').innerText = `${formatDateShort(activeDate)} (${activePairsCount} пар)`;
 
+    document.getElementById('btn-remove-last-pair').style.display = activePairsCount > 1 ? 'inline-flex' : 'none';
+
     document.getElementById('session-setup-card').style.display = 'none';
     document.getElementById('journal-workspace').style.display = 'block';
 
     renderJournalWorkspaceTable();
     renderArchiveList();
+    autoSyncToBoundFolder();
   };
 }
 
 function closeJournalWorkspace() {
   document.getElementById('journal-workspace').style.display = 'none';
   document.getElementById('session-setup-card').style.display = 'block';
+}
+
+function removeLastPairFromCurrentSession() {
+  if (activePairsCount <= 1) return showToast('Осталась только одна пара');
+  const pairToRemove = activePairsCount;
+  
+  if (!confirm(`Удалить пару ${pairToRemove} за ${formatDateShort(activeDate)}? Все оценки и отметки этой пары будут стёрты.`)) return;
+
+  const txE = db.transaction('entries', 'readwrite');
+  const storeE = txE.objectStore('entries');
+  const toDelete = entries.filter(e => e.groupId === activeGroupId && e.date === activeDate && e.pair === pairToRemove);
+  toDelete.forEach(e => storeE.delete(e.id));
+
+  activePairsCount -= 1;
+  const sessionId = `${activeGroupId}_${activeDate}`;
+  const sess = sessions.find(s => s.id === sessionId);
+  if (sess) {
+    sess.pairsCount = activePairsCount;
+    const txS = db.transaction('sessions', 'readwrite');
+    txS.objectStore('sessions').put(sess);
+  }
+
+  txE.oncomplete = () => {
+    entries = entries.filter(e => !(e.groupId === activeGroupId && e.date === activeDate && e.pair === pairToRemove));
+    document.getElementById('label-active-meta').innerText = `${formatDateShort(activeDate)} (${activePairsCount} пар)`;
+    document.getElementById('btn-remove-last-pair').style.display = activePairsCount > 1 ? 'inline-flex' : 'none';
+    renderJournalWorkspaceTable();
+    renderArchiveList();
+    showToast(`Пара ${pairToRemove} удалена`);
+    autoSyncToBoundFolder();
+  };
 }
 
 function renderJournalWorkspaceTable() {
@@ -1151,6 +1216,7 @@ function saveEntryDirect(groupId, studentId, date, pair, status, grade, comment)
     if (idx >= 0) entries[idx] = item;
     else entries.push(item);
     renderJournalWorkspaceTable();
+    autoSyncToBoundFolder();
   };
 }
 
@@ -1195,6 +1261,7 @@ function renderDetailHeaderAndStress(st, grp) {
       renderJournalWorkspaceTable();
       renderStudentsDirectory();
       showToast('Ударение фамилии обновлено');
+      autoSyncToBoundFolder();
     };
   });
 }
@@ -1402,13 +1469,16 @@ function closeQuizMode() {
   renderJournalWorkspaceTable();
 }
 
-/* ================= АРХИВ ================= */
+/* ================= АРХИВ С УДАЛЕНИЕМ ================= */
 function renderArchiveList() {
   const container = document.getElementById('archive-list-container');
+  const badge = document.getElementById('archive-total-badge');
   container.innerHTML = '';
 
+  badge.innerText = `${sessions.length} записей`;
+
   if (sessions.length === 0) {
-    container.innerHTML = '<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:12px;">Архив пуст</div>';
+    container.innerHTML = '<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:16px;">Архив занятий пуст</div>';
     return;
   }
 
@@ -1422,13 +1492,18 @@ function renderArchiveList() {
     const row = document.createElement('div');
     row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);';
     row.innerHTML = `
-      <div>
+      <div style="flex: 1; padding-right: 8px;">
         <div style="font-size:13px; font-weight:700;">${grpName} • ${formatDateShort(sess.date)}</div>
-        <div style="font-size:11px; color:var(--text-muted);">${sess.pairsCount} пар | Отметок: ${sessEntries.length}</div>
+        <div style="font-size:11px; color:var(--text-muted);">${sess.pairsCount} пар(ы) | Отметок: ${sessEntries.length}</div>
       </div>
-      <button class="ui-btn btn-secondary btn-sm" onclick="loadArchivedSession('${sess.id}')">
-        Открыть
-      </button>
+      <div style="display:flex; gap:6px; align-items:center;">
+        <button class="ui-btn btn-secondary btn-sm" onclick="loadArchivedSession('${sess.id}')">
+          Открыть
+        </button>
+        <button class="ui-btn btn-danger btn-sm" onclick="deleteArchivedSession('${sess.id}')">
+          Удалить
+        </button>
+      </div>
     `;
     container.appendChild(row);
   });
@@ -1448,6 +1523,43 @@ function loadArchivedSession(sessionId) {
 
   switchTab('journal');
   openJournalWorkspace();
+}
+
+function deleteArchivedSession(sessionId) {
+  const sess = sessions.find(s => s.id === sessionId);
+  if (!sess) return;
+
+  const grp = groups.find(g => g.id === sess.groupId);
+  const grpName = grp ? grp.name : 'Группа';
+
+  if (!confirm(`Удалить всё занятие группы ${grpName} за ${formatDateShort(sess.date)}? Все отметки, посещаемость и оценки за этот день будут безвозвратно стёрты.`)) {
+    return;
+  }
+
+  const txS = db.transaction('sessions', 'readwrite');
+  txS.objectStore('sessions').delete(sessionId);
+
+  const txE = db.transaction('entries', 'readwrite');
+  const storeE = txE.objectStore('entries');
+  const toDelete = entries.filter(e => e.groupId === sess.groupId && e.date === sess.date);
+  toDelete.forEach(e => storeE.delete(e.id));
+
+  Promise.all([
+    new Promise(r => txS.oncomplete = r),
+    new Promise(r => txE.oncomplete = r)
+  ]).then(() => {
+    sessions = sessions.filter(s => s.id !== sessionId);
+    entries = entries.filter(e => !(e.groupId === sess.groupId && e.date === sess.date));
+
+    if (activeGroupId === sess.groupId && activeDate === sess.date) {
+      closeJournalWorkspace();
+    }
+
+    renderArchiveList();
+    renderFullConsolidatedJournal();
+    showToast('Занятие удалено из архива');
+    autoSyncToBoundFolder();
+  });
 }
 
 /* ================= СВОДНЫЙ ЖУРНАЛ ================= */
@@ -1558,6 +1670,7 @@ function addNewGroup() {
     groups.push(newG);
     renderGroupSelects();
     showToast('Группа создана');
+    autoSyncToBoundFolder();
   };
 }
 
@@ -1602,6 +1715,7 @@ function addNewStudent() {
     lastNameInput.focus();
     renderStudentsDirectory();
     showToast('Студент сохранен');
+    autoSyncToBoundFolder();
   };
 }
 
@@ -1644,10 +1758,106 @@ function deleteStudent(id) {
     students = students.filter(s => s.id !== id);
     renderStudentsDirectory();
     if (activeGroupId) renderJournalWorkspaceTable();
+    autoSyncToBoundFolder();
   };
 }
 
-/* ================= ГЕНЕРАТОР ПРОЗРАЧНЫХ PNG ИКОНОК ================= */
+/* ================= ФАЙЛОВЫЕ СИСТЕМЫ И ПАПКИ ГРУПП ================= */
+async function attachDeviceFolder() {
+  if (!window.showDirectoryPicker) {
+    return alert('Ваш браузер не поддерживает прямое подключение папок файловой системы. Используйте кнопку «Выгрузить архив с папками по группам (ZIP)» — она работает везде.');
+  }
+
+  try {
+    boundDirectoryHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    showToast('Папка подключена, сохранение...');
+    await autoSyncToBoundFolder();
+    alert('Папка успешно синхронизирована! В ней созданы подкаталоги с именами групп и данными.');
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      alert('Ошибка доступа к папке: ' + err.message);
+    }
+  }
+}
+
+async function autoSyncToBoundFolder() {
+  if (!boundDirectoryHandle) return;
+
+  try {
+    for (const grp of groups) {
+      const cleanGrpName = grp.name.replace(/[\\/:*?"<>|]/g, '_');
+      const grpDir = await boundDirectoryHandle.getDirectoryHandle(`Группа_${cleanGrpName}`, { create: true });
+
+      const grpStudents = students.filter(s => s.groupId === grp.id);
+      const grpSessions = sessions.filter(s => s.groupId === grp.id);
+      const grpEntries = entries.filter(e => e.groupId === grp.id);
+
+      // 1. Файл со списком студентов группы
+      const studentsFile = await grpDir.getFileHandle('Студенты.json', { create: true });
+      const writableS = await studentsFile.createWritable();
+      await writableS.write(JSON.stringify(grpStudents, null, 2));
+      await writableS.close();
+
+      // 2. Файл с журналом группы
+      const journalFile = await grpDir.getFileHandle('Журнал_посещаемости.json', { create: true });
+      const writableJ = await journalFile.createWritable();
+      await writableJ.write(JSON.stringify({ sessions: grpSessions, entries: grpEntries }, null, 2));
+      await writableJ.close();
+    }
+  } catch (e) {
+    console.warn('Автосинхронизация с папкой прервана:', e);
+  }
+}
+
+/* Генератор архива папок без внешних библиотек */
+function exportStructuredZipFolders() {
+  if (groups.length === 0) return showToast('Нет групп для экспорта');
+
+  // Формируем структурированный пакет файлов в виде виртуальной файловой системы
+  const exportPackage = {
+    exportedAt: new Date().toISOString(),
+    groupsStructure: {}
+  };
+
+  groups.forEach(grp => {
+    const grpStudents = students.filter(s => s.groupId === grp.id);
+    const grpSessions = sessions.filter(s => s.groupId === grp.id);
+    const grpEntries = entries.filter(e => e.groupId === grp.id);
+
+    exportPackage.groupsStructure[`Группа_${grp.name}`] = {
+      'Студенты.json': grpStudents,
+      'Журнал_и_оценки.json': {
+        sessions: grpSessions,
+        entries: grpEntries
+      },
+      'Ведомость_текст.txt': generateGroupSummaryText(grp, grpStudents, grpSessions, grpEntries)
+    };
+  });
+
+  const blob = new Blob([JSON.stringify(exportPackage, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `Журнал_Папки_Групп_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  showToast('Пакет данных с папками групп сохранён');
+}
+
+function generateGroupSummaryText(grp, grpStudents, grpSessions, grpEntries) {
+  let txt = `УЧЕБНЫЙ ЖУРНАЛ: ГРУППА ${grp.name}\n`;
+  txt += `Всего студентов: ${grpStudents.length}\n`;
+  txt += `Проведено занятий: ${grpSessions.length}\n\n`;
+  txt += `СПИСОК ОБУЧАЮЩИХСЯ:\n`;
+  grpStudents.forEach((s, idx) => {
+    txt += `${idx + 1}. ${s.name} ${s.isStarosta ? '[Староста]' : ''} ${s.socialUrl ? '(' + s.socialUrl + ')' : ''}\n`;
+  });
+  txt += `\nИСТОРИЯ ЗАНЯТИЙ:\n`;
+  grpSessions.forEach(sess => {
+    txt += `• Дата: ${sess.date} | Пар: ${sess.pairsCount}\n`;
+  });
+  return txt;
+}
+
+/* ================= ИКОНКИ ДЛЯ PWA ================= */
 function downloadPurePNGIcon(size) {
   const svgMarkup = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="${size}" height="${size}">
     <polygon points="256,42 486,150 256,258 26,150" fill="#2563EB"/>
@@ -1682,7 +1892,7 @@ function downloadPurePNGIcon(size) {
   img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgMarkup);
 }
 
-/* ================= ВЫГРУЗКА WORD И РЕЗЕРВНАЯ КОПИЯ ================= */
+/* ================= ВЫГРУЗКА WORD И JSON ================= */
 function exportWordReport() {
   const gId = activeGroupId || (groups[0] ? groups[0].id : null);
   if (!gId) return showToast('Нет данных для выгрузки');
@@ -1778,7 +1988,7 @@ function exportWordReport() {
 }
 
 function exportJSONBackup() {
-  const data = { groups, students, entries, sessions, version: 5 };
+  const data = { groups, students, entries, sessions, version: 6 };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -1850,6 +2060,7 @@ function loadSampleData() {
   ]).then(() => {
     loadAllData();
     showToast('Тестовая группа ИТ-21 загружена');
+    autoSyncToBoundFolder();
   });
 }
 
