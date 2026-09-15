@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Академическая шапочка -->
+  <polygon points="256,42 486,150 256,258 26,150" fill="#2563EB"/>
+  <path d="M124,196 L124,296 C124,364 388,364 388,296 L388,196 L256,258 Z" fill="#1D4ED8"/>
+  <!-- Кисточка -->
+  <path d="M446,168 L446,295 C446,316 458,326 458,346 C458,364 440,364 440,346 C440,326 452,316 452,295 L452,165" fill="none" stroke="#F59E0B" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Раскрытый журнал -->
+  <path d="M68,356 C132,332 220,338 256,372 C292,338 380,332 444,356 L444,444 C380,420 292,426 256,460 C220,426 132,420 68,444 Z" fill="#334155"/>
+  <path d="M256,372 L256,460" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+  <!-- Строки журнала -->
+  <line x1="106" y1="382" x2="212" y2="370" stroke="#94A3B8" stroke-width="7" stroke-linecap="round"/>
+  <line x1="106" y1="406" x2="192" y2="394" stroke="#94A3B8" stroke-width="7" stroke-linecap="round"/>
+  <line x1="300" y1="370" x2="406" y2="382" stroke="#94A3B8" stroke-width="7" stroke-linecap="round"/>
+  <line x1="320" y1="394" x2="406" y2="406" stroke="#94A3B8" stroke-width="7" stroke-linecap="round"/>
+  <!-- Зеленая отметка -->
+  <polyline points="226,406 248,428 288,384" fill="none" stroke="#10B981" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
