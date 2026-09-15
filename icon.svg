@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Академическая шапочка (конфедератка) -->
+  <polygon points="256,48 472,152 256,256 40,152" fill="#2563EB"/>
+  <path d="M136,198 L136,290 C136,350 376,350 376,290 L376,198 L256,256 Z" fill="#1D4ED8"/>
+  
+  <!-- Кисточка конфедератки -->
+  <path d="M432,172 L432,295 C432,315 446,325 446,345 C446,362 428,362 428,345 C428,325 440,315 440,295 L440,168" fill="none" stroke="#F59E0B" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Раскрытый журнал под конфедераткой -->
+  <path d="M72,350 C136,328 220,334 256,366 C292,334 376,328 440,350 L440,436 C376,414 292,420 256,452 C220,420 136,414 72,436 Z" fill="#334155"/>
+  <path d="M256,366 L256,452" stroke="#F8FAFC" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Строки журнала -->
+  <line x1="112" y1="375" x2="216" y2="362" stroke="#94A3B8" stroke-width="7" stroke-linecap="round"/>
+  <line x1="112" y1="398" x2="196" y2="385" stroke="#94A3B8" stroke-width="7" stroke-linecap="round"/>
+  <line x1="296" y1="362" x2="400" y2="375" stroke="#94A3B8" stroke-width="7" stroke-linecap="round"/>
+  <line x1="316" y1="385" x2="400" y2="398" stroke="#94A3B8" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- Отметка выполнения / галочка -->
+  <polyline points="228,400 248,422 284,378" fill="none" stroke="#10B981" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
