@@ -399,17 +399,18 @@
   }
 
   .badge-starosta {
-    font-size: 9px;
+    font-size: 9.5px;
     font-weight: 700;
     color: var(--starosta-badge-text);
     background: var(--starosta-badge-bg);
     border: 1px solid var(--starosta-badge-border);
-    padding: 1px 4px;
-    border-radius: 3px;
+    padding: 2px 5px;
+    border-radius: 4px;
     margin-left: 4px;
+    display: inline-flex;
+    align-items: center;
   }
 
-  /* Ячейка сводной таблицы с комментарием */
   .cell-with-note {
     background-color: #FEF3C7 !important;
     color: #92400E !important;
@@ -543,6 +544,36 @@
     overflow-y: auto;
   }
 
+  .student-directory-card {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .student-directory-card.is-starosta-card {
+    background-color: #FFFDF7;
+    border-radius: var(--radius-sm);
+    padding: 10px 8px;
+    margin-bottom: 4px;
+    border: 1px solid #FDE68A;
+  }
+
+  .note-clickable-box {
+    margin-top: 5px;
+    font-size: 11.5px;
+    color: #1E3A8A;
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
+    border-radius: var(--radius-sm);
+    padding: 5px 8px;
+    cursor: pointer;
+    line-height: 1.35;
+    transition: background 0.15s ease;
+  }
+
+  .note-clickable-box:active {
+    background: #DBEAFE;
+  }
+
   .toast {
     position: fixed;
     bottom: 16px;
@@ -674,7 +705,7 @@
           <select id="full-journal-group-select" class="ui-select" onchange="renderFullConsolidatedJournal()"></select>
         </div>
         <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">
-          * Жёлтые ячейки содержат комментарий к занятию. Нажмите на ячейку для просмотра подробностей.
+          * Жёлтые ячейки содержат комментарий к уроку. Нажмите на ячейку для просмотра подробностей.
         </p>
         <div class="table-wrapper" style="margin-top: 8px;">
           <table class="journal-table" id="full-consolidated-table"></table>
@@ -729,6 +760,9 @@
           <span>Обучающиеся</span>
           <span id="students-count-lbl" style="font-weight: 500;">0 чел.</span>
         </div>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">
+          Нажмите на плашку заметки для её изменения. Статус старосты переключается одной кнопкой (в группе может быть несколько старост).
+        </p>
         <div id="students-directory-list"></div>
       </div>
     </div>
@@ -791,7 +825,39 @@
 
   </main>
 
-  <!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ СТУДЕНТА -->
+  <!-- МОДАЛЬНОЕ ОКНО: БЫСТРОЕ РЕДАКТИРОВАНИЕ ЗАМЕТКИ И ДАННЫХ СТУДЕНТА ВО ВКЛАДКЕ СТУДЕНТЫ -->
+  <div id="popup-student-quick-edit" class="popup-dialog-wrap">
+    <div class="popup-dialog">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+        <div style="font-size: 14px; font-weight: 700;">Редактирование студента</div>
+        <button class="ui-btn btn-secondary btn-sm" onclick="closeStudentQuickEditModal()">Закрыть</button>
+      </div>
+
+      <div style="margin-bottom: 10px;">
+        <div id="quick-edit-student-name" style="font-size: 15px; font-weight: 700;">ФИО</div>
+        <div id="quick-edit-student-group" style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">Группа</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" style="font-weight: 700;">Постоянный комментарий (особенности, долги):</label>
+        <textarea id="quick-edit-student-note" class="ui-input" rows="3" placeholder="Напр.: слабое зрение, индивидуальный график, пересдать чертеж..." style="resize: vertical; font-size: 13px;"></textarea>
+      </div>
+
+      <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin: 12px 0 16px 0;">
+        <input type="checkbox" id="quick-edit-student-starosta" style="width: 18px; height: 18px; cursor: pointer;">
+        <label for="quick-edit-student-starosta" class="form-label" style="margin: 0; cursor: pointer; font-size: 12.5px; font-weight: 600;">
+          Староста группы (в группе может быть несколько старост)
+        </label>
+      </div>
+
+      <div style="display: flex; gap: 6px;">
+        <button class="ui-btn btn-secondary" style="flex: 1;" onclick="closeStudentQuickEditModal()">Отмена</button>
+        <button class="ui-btn btn-primary" style="flex: 2;" onclick="saveStudentQuickEdit()">Сохранить изменения</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО: РЕДАКТИРОВАНИЕ СТУДЕНТА В ЖУРНАЛЕ -->
   <div id="popup-student-detail" class="popup-dialog-wrap">
     <div class="popup-dialog">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
@@ -807,7 +873,6 @@
         <div id="detail-stress-bar" class="stress-picker-bar"></div>
       </div>
 
-      <!-- Постоянный комментарий к студенту -->
       <div class="form-group">
         <label class="form-label">Постоянный комментарий к человеку (особенности, долги):</label>
         <textarea id="detail-student-note-input" class="ui-input" rows="2" placeholder="Особенности, долги, индивидуальные указания..." style="resize: vertical; font-size: 12.5px;"></textarea>
@@ -876,9 +941,8 @@
       <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;" id="screen-rollcall-group-lbl">Группа</div>
       <div class="screen-student-name" id="screen-rollcall-name">-</div>
       <div id="screen-rollcall-starosta-badge" style="display: none; margin-top: 4px;">
-        <span class="badge-starosta">Староста группы</span>
+        <span class="badge-starosta">⭐ Староста группы</span>
       </div>
-      <!-- Постоянный комментарий при перекличке -->
       <div id="screen-rollcall-note" class="student-permanent-note-badge" style="display: none;"></div>
     </div>
     <div class="screen-status-grid">
@@ -899,9 +963,8 @@
       <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Опрос присутствующих</div>
       <div class="screen-student-name" id="quiz-student-name">-</div>
       <div id="quiz-starosta-badge" style="display: none; margin-top: 4px;">
-        <span class="badge-starosta">Староста группы</span>
+        <span class="badge-starosta">⭐ Староста группы</span>
       </div>
-      <!-- Постоянный комментарий при опросе -->
       <div id="quiz-student-note" class="student-permanent-note-badge" style="display: none;"></div>
 
       <div class="grade-selector-row">
@@ -1238,7 +1301,7 @@ function renderJournalWorkspaceTable() {
       tbody += `<td style="text-align: center; color: var(--text-muted);">${idx + 1}</td>`;
       tbody += `<td>
         <span style="font-weight: 600;">${formatNameWithStress(st)}</span>
-        ${st.isStarosta ? '<span class="badge-starosta">Староста</span>' : ''}
+        ${st.isStarosta ? '<span class="badge-starosta">⭐ Староста</span>' : ''}
         ${st.note ? `<div style="font-size: 10px; color: var(--text-muted); font-weight: 500;">📌 ${escapeHtml(st.note)}</div>` : ''}
       </td>`;
 
@@ -1295,7 +1358,7 @@ function saveEntryDirect(groupId, studentId, date, pair, status, grade, comment)
   };
 }
 
-/* ================= ДЕТАЛИЗАЦИЯ И РЕДАКТИРОВАНИЕ ================= */
+/* ================= ДЕТАЛИЗАЦИЯ И РЕДАКТИРОВАНИЕ В ЖУРНАЛЕ ================= */
 let detailCurrentStudentId = null;
 let detailSelectedGrade = '';
 let detailSelectedStatus = '';
@@ -1323,7 +1386,7 @@ function openStudentDetailModal(studentId) {
 }
 
 function renderDetailHeaderAndStress(st, grp) {
-  document.getElementById('detail-student-name').innerHTML = `${formatNameWithStress(st)} ${st.isStarosta ? '<span class="badge-starosta">Староста</span>' : ''}`;
+  document.getElementById('detail-student-name').innerHTML = `${formatNameWithStress(st)} ${st.isStarosta ? '<span class="badge-starosta">⭐ Староста</span>' : ''}`;
   document.getElementById('detail-student-meta').innerText = `${grp ? grp.name : ''} • Дата: ${formatDateShort(activeDate)}`;
 
   const lastName = st.lastName || (st.name ? st.name.split(' ')[0] : '');
@@ -1382,7 +1445,7 @@ function saveStudentDetailModal() {
   const comment = document.getElementById('detail-comment-input').value.trim();
   const permanentNote = document.getElementById('detail-student-note-input').value.trim();
 
-  // 1. Сохраняем постоянный комментарий к студенту
+  // Сохраняем постоянный комментарий
   const st = students.find(s => s.id === detailCurrentStudentId);
   if (st) {
     st.note = permanentNote;
@@ -1393,7 +1456,6 @@ function saveStudentDetailModal() {
     };
   }
 
-  // 2. Сохраняем отметку/оценку/комментарий к конкретной паре
   saveEntryDirect(activeGroupId, detailCurrentStudentId, activeDate, pair, detailSelectedStatus, detailSelectedGrade, comment);
   closeStudentDetailModal();
   showToast('Данные сохранены');
@@ -1401,6 +1463,70 @@ function saveStudentDetailModal() {
 
 function closeStudentDetailModal() {
   document.getElementById('popup-student-detail').classList.remove('active');
+}
+
+/* ================= БЫСТРОЕ РЕДАКТИРОВАНИЕ ВО ВКЛАДКЕ «СТУДЕНТЫ» ================= */
+let quickEditStudentId = null;
+
+function toggleStudentStarosta(studentId) {
+  const st = students.find(s => s.id === studentId);
+  if (!st) return;
+
+  st.isStarosta = !st.isStarosta;
+
+  const tx = db.transaction('students', 'readwrite');
+  tx.objectStore('students').put(st);
+  tx.oncomplete = () => {
+    renderStudentsDirectory();
+    if (activeGroupId) renderJournalWorkspaceTable();
+    renderFullConsolidatedJournal();
+    const stName = st.lastName || (st.name ? st.name.split(' ')[0] : 'Студент');
+    showToast(st.isStarosta ? `${stName} назначен(а) старостой ⭐` : `Статус старосты снят`);
+    autoSyncToBoundFolder();
+  };
+}
+
+function openEditStudentNoteModal(studentId) {
+  quickEditStudentId = studentId;
+  const st = students.find(s => s.id === studentId);
+  if (!st) return;
+
+  const grp = groups.find(g => g.id === st.groupId);
+
+  document.getElementById('quick-edit-student-name').innerHTML = formatNameWithStress(st);
+  document.getElementById('quick-edit-student-group').innerText = `Группа: ${grp ? grp.name : '—'}`;
+  document.getElementById('quick-edit-student-note').value = st.note || '';
+  document.getElementById('quick-edit-student-starosta').checked = Boolean(st.isStarosta);
+
+  document.getElementById('popup-student-quick-edit').classList.add('active');
+  setTimeout(() => {
+    document.getElementById('quick-edit-student-note').focus();
+  }, 100);
+}
+
+function closeStudentQuickEditModal() {
+  document.getElementById('popup-student-quick-edit').classList.remove('active');
+}
+
+function saveStudentQuickEdit() {
+  if (!quickEditStudentId) return closeStudentQuickEditModal();
+
+  const st = students.find(s => s.id === quickEditStudentId);
+  if (!st) return closeStudentQuickEditModal();
+
+  st.note = document.getElementById('quick-edit-student-note').value.trim();
+  st.isStarosta = document.getElementById('quick-edit-student-starosta').checked;
+
+  const tx = db.transaction('students', 'readwrite');
+  tx.objectStore('students').put(st);
+  tx.oncomplete = () => {
+    closeStudentQuickEditModal();
+    renderStudentsDirectory();
+    if (activeGroupId) renderJournalWorkspaceTable();
+    renderFullConsolidatedJournal();
+    showToast('Данные студента обновлены');
+    autoSyncToBoundFolder();
+  };
 }
 
 /* ================= ПЕРЕКЛИЧКА ================= */
@@ -1461,7 +1587,6 @@ function renderScreenRollCallStudent() {
   document.getElementById('screen-rollcall-name').innerHTML = formatNameWithStress(st);
   document.getElementById('screen-rollcall-starosta-badge').style.display = st.isStarosta ? 'block' : 'none';
 
-  // Постоянный комментарий к студенту на экране переклички
   const noteEl = document.getElementById('screen-rollcall-note');
   if (st.note && st.note.trim()) {
     noteEl.innerHTML = `📌 <b>Заметка:</b> ${escapeHtml(st.note)}`;
@@ -1526,7 +1651,6 @@ function renderQuizScreenItem() {
   document.getElementById('quiz-student-name').innerHTML = formatNameWithStress(st);
   document.getElementById('quiz-starosta-badge').style.display = st.isStarosta ? 'block' : 'none';
 
-  // Постоянный комментарий к студенту на экране опроса
   const noteEl = document.getElementById('quiz-student-note');
   if (st.note && st.note.trim()) {
     noteEl.innerHTML = `📌 <b>Заметка:</b> ${escapeHtml(st.note)}`;
@@ -1696,7 +1820,6 @@ function renderFullConsolidatedJournal() {
     }
   });
 
-  // Шапка: сначала ФИО, затем Постоянная заметка к студенту, затем дни занятий
   let thead = '<thead><tr>';
   thead += '<th style="width:26px;">№</th>';
   thead += '<th style="text-align:left; min-width:140px;">Обучающийся</th>';
@@ -1710,13 +1833,11 @@ function renderFullConsolidatedJournal() {
   grpStudents.forEach((st, idx) => {
     tbody += `<tr ${st.isStarosta ? 'class="starosta-row"' : ''}>`;
     tbody += `<td style="text-align:center; color:var(--text-muted);">${idx + 1}</td>`;
-    tbody += `<td><span style="font-weight:600;">${formatNameWithStress(st)}</span> ${st.isStarosta ? '<span class="badge-starosta">Староста</span>' : ''}</td>`;
+    tbody += `<td><span style="font-weight:600;">${formatNameWithStress(st)}</span> ${st.isStarosta ? '<span class="badge-starosta">⭐ Староста</span>' : ''}</td>`;
     
-    // Колонка постоянного комментария к студенту
     const studentNoteHtml = st.note ? `<span style="color:#1E3A8A; font-weight:600;">${escapeHtml(st.note)}</span>` : '<span style="color:var(--text-light);">—</span>';
     tbody += `<td style="font-size:11.5px; white-space:normal; line-height:1.3; max-width:180px;">${studentNoteHtml}</td>`;
 
-    // Ячейки по парам
     colPairs.forEach(col => {
       const e = getEntry(gId, st.id, col.date, col.pair);
       let cellText = '—';
@@ -1735,7 +1856,6 @@ function renderFullConsolidatedJournal() {
       }
 
       if (hasComment) {
-        // Подсвеченная ячейка с вызовом диалога деталей
         tbody += `<td class="cell-with-note" onclick="openConsolidatedCellDetail(${gId}, ${st.id}, '${col.date}', ${col.pair})" style="text-align:center; font-size:11px;" title="Комментарий к паре: ${escapeHtml(e.comment)}">${cellText} 💬</td>`;
       } else {
         tbody += `<td style="text-align:center; font-size:11px;">${cellText}</td>`;
@@ -1749,13 +1869,12 @@ function renderFullConsolidatedJournal() {
   table.innerHTML = thead + tbody;
 }
 
-/* Всплывающее окно деталей ячейки сводного журнала */
 function openConsolidatedCellDetail(groupId, studentId, date, pair) {
   const st = students.find(s => s.id === studentId);
   const entry = getEntry(groupId, studentId, date, pair);
   if (!st || !entry) return;
 
-  document.getElementById('consolidated-modal-student').innerHTML = `${formatNameWithStress(st)} ${st.isStarosta ? '<span class="badge-starosta">Староста</span>' : ''}`;
+  document.getElementById('consolidated-modal-student').innerHTML = `${formatNameWithStress(st)} ${st.isStarosta ? '<span class="badge-starosta">⭐ Староста</span>' : ''}`;
   
   const noteEl = document.getElementById('consolidated-modal-note');
   if (st.note && st.note.trim()) {
@@ -1784,7 +1903,7 @@ function closeConsolidatedCellDetail() {
   document.getElementById('popup-consolidated-detail').classList.remove('active');
 }
 
-/* ================= БЫСТРЫЙ ВВОД ================= */
+/* ================= БЫСТРЫЙ ВВОД СТУДЕНТОВ ================= */
 function setupEnterKeyBindings() {
   const groupInput = document.getElementById('new-group-name');
   groupInput.addEventListener('keydown', (e) => {
@@ -1896,6 +2015,7 @@ function addNewStudent() {
   };
 }
 
+/* ================= СПРАВОЧНИК СТУДЕНТОВ С КНОПКАМИ СТАРОСТЫ И ЗАМЕТОК ================= */
 function renderStudentsDirectory() {
   const gId = parseInt(document.getElementById('student-bind-group').value) || null;
   const container = document.getElementById('students-directory-list');
@@ -1912,17 +2032,39 @@ function renderStudentsDirectory() {
   container.innerHTML = '';
   filtered.forEach((s, idx) => {
     const item = document.createElement('div');
-    item.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border);';
+    item.className = 'student-directory-card' + (s.isStarosta ? ' is-starosta-card' : '');
+    
+    const noteContent = s.note && s.note.trim()
+      ? `📌 <b>Заметка:</b> ${escapeHtml(s.note)}`
+      : `<span style="color:#64748B; font-style:italic;">+ Добавить постоянный комментарий к студенту...</span>`;
+
     item.innerHTML = `
-      <div style="flex:1; padding-right:8px;">
-        <div style="font-size:13px; font-weight:600;">
+      <div>
+        <div style="font-size:13.5px; font-weight:700;">
           ${idx + 1}. ${formatNameWithStress(s)}
-          ${s.isStarosta ? '<span class="badge-starosta">Староста</span>' : ''}
+          ${s.isStarosta ? '<span class="badge-starosta">⭐ Староста</span>' : ''}
         </div>
-        ${s.note ? `<div style="font-size:11px; color:#1E3A8A; margin-top:2px;">📌 ${escapeHtml(s.note)}</div>` : ''}
-        ${s.socialUrl ? `<a href="${s.socialUrl}" target="_blank" style="font-size:11px; color:var(--accent); text-decoration:none; display:inline-block; margin-top:2px;">Профиль сети</a>` : ''}
+        
+        <!-- Интерактивный блок постоянного комментария -->
+        <div class="note-clickable-box" onclick="openEditStudentNoteModal(${s.id})" title="Нажмите для редактирования постоянного комментария">
+          ${noteContent}
+        </div>
+
+        ${s.socialUrl ? `<a href="${s.socialUrl}" target="_blank" style="font-size:11px; color:var(--accent); text-decoration:none; display:inline-block; margin-top:4px;">Профиль сети</a>` : ''}
       </div>
-      <button class="ui-btn btn-danger btn-sm" onclick="deleteStudent(${s.id})">Удалить</button>
+
+      <!-- Кнопки быстрого управления прямо во вкладке -->
+      <div style="display:flex; gap:6px; margin-top:8px; align-items:center;">
+        <button class="ui-btn btn-sm ${s.isStarosta ? 'btn-primary' : 'btn-secondary'}" onclick="toggleStudentStarosta(${s.id})" title="Переключить статус старосты">
+          ${s.isStarosta ? '⭐ Снять старосту' : '+ Назначить старостой'}
+        </button>
+        <button class="ui-btn btn-secondary btn-sm" onclick="openEditStudentNoteModal(${s.id})">
+          ✏️ Заметка
+        </button>
+        <button class="ui-btn btn-danger btn-sm" style="margin-left:auto;" onclick="deleteStudent(${s.id})">
+          Удалить
+        </button>
+      </div>
     `;
     container.appendChild(item);
   });
@@ -1936,6 +2078,7 @@ function deleteStudent(id) {
     students = students.filter(s => s.id !== id);
     renderStudentsDirectory();
     if (activeGroupId) renderJournalWorkspaceTable();
+    renderFullConsolidatedJournal();
     autoSyncToBoundFolder();
   };
 }
@@ -1970,13 +2113,11 @@ async function autoSyncToBoundFolder() {
       const grpSessions = sessions.filter(s => s.groupId === grp.id);
       const grpEntries = entries.filter(e => e.groupId === grp.id);
 
-      // 1. Файл со списком студентов группы
       const studentsFile = await grpDir.getFileHandle('Студенты.json', { create: true });
       const writableS = await studentsFile.createWritable();
       await writableS.write(JSON.stringify(grpStudents, null, 2));
       await writableS.close();
 
-      // 2. Файл с журналом группы
       const journalFile = await grpDir.getFileHandle('Журнал_посещаемости.json', { create: true });
       const writableJ = await journalFile.createWritable();
       await writableJ.write(JSON.stringify({ sessions: grpSessions, entries: grpEntries }, null, 2));
@@ -2166,7 +2307,7 @@ function exportWordReport() {
 }
 
 function exportJSONBackup() {
-  const data = { groups, students, entries, sessions, version: 7 };
+  const data = { groups, students, entries, sessions, version: 8 };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -2272,6 +2413,7 @@ function switchTab(tabId) {
 
   if (tabId === 'full') renderFullConsolidatedJournal();
   if (tabId === 'archive') renderArchiveList();
+  if (tabId === 'students') renderStudentsDirectory();
 }
 
 function formatDateShort(isoDateStr) {
