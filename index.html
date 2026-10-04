@@ -304,6 +304,24 @@
     border-color: var(--accent);
   }
 
+  .student-permanent-note-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #EFF6FF;
+    border: 1px solid var(--accent-border);
+    color: #1E3A8A;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.35;
+    max-width: 90%;
+    margin-top: 6px;
+    text-align: center;
+    word-break: break-word;
+  }
+
   .table-wrapper {
     width: 100%;
     overflow-x: auto;
@@ -391,6 +409,20 @@
     margin-left: 4px;
   }
 
+  /* Ячейка сводной таблицы с комментарием */
+  .cell-with-note {
+    background-color: #FEF3C7 !important;
+    color: #92400E !important;
+    border: 1px solid #FCD34D !important;
+    cursor: pointer;
+    font-weight: 700;
+    transition: background 0.15s ease;
+  }
+
+  .cell-with-note:hover {
+    background-color: #FDE68A !important;
+  }
+
   .modal-overlay {
     position: fixed;
     inset: 0;
@@ -429,7 +461,7 @@
     font-weight: 800;
     line-height: 1.3;
     color: var(--text);
-    margin: 10px 0 6px 0;
+    margin: 10px 0 4px 0;
     word-break: break-word;
     max-width: 90%;
   }
@@ -641,6 +673,9 @@
           <label class="form-label">Учебная группа:</label>
           <select id="full-journal-group-select" class="ui-select" onchange="renderFullConsolidatedJournal()"></select>
         </div>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">
+          * Жёлтые ячейки содержат комментарий к занятию. Нажмите на ячейку для просмотра подробностей.
+        </p>
         <div class="table-wrapper" style="margin-top: 8px;">
           <table class="journal-table" id="full-consolidated-table"></table>
         </div>
@@ -673,6 +708,10 @@
           <input type="text" id="new-student-firstname" class="ui-input" placeholder="Алексей Петрович">
         </div>
         <div class="form-group">
+          <label class="form-label">Постоянный комментарий к студенту (особенности, долги):</label>
+          <input type="text" id="new-student-note" class="ui-input" placeholder="Напр.: слабое зрение, долг по чертежу, спец. группа">
+        </div>
+        <div class="form-group">
           <label class="form-label">Ссылка на соцсеть (VK, Telegram):</label>
           <input type="url" id="new-student-social" class="ui-input" placeholder="https://t.me/username">
         </div>
@@ -696,7 +735,6 @@
 
     <!-- 5. ВКЛАДКА: СИСТЕМА И ХРАНЕНИЕ -->
     <div id="view-system" class="view-panel">
-      <!-- Блок сохранения и обмена папками -->
       <div class="card" style="border: 1px solid var(--accent); background: #F8FAFC;">
         <div class="card-header" style="color: var(--accent);">Автоматическое сохранение и обмен данными</div>
         <p style="font-size: 11.5px; color: var(--text); line-height: 1.45; margin-bottom: 12px;">
@@ -769,13 +807,19 @@
         <div id="detail-stress-bar" class="stress-picker-bar"></div>
       </div>
 
+      <!-- Постоянный комментарий к студенту -->
+      <div class="form-group">
+        <label class="form-label">Постоянный комментарий к человеку (особенности, долги):</label>
+        <textarea id="detail-student-note-input" class="ui-input" rows="2" placeholder="Особенности, долги, индивидуальные указания..." style="resize: vertical; font-size: 12.5px;"></textarea>
+      </div>
+
       <div class="form-group">
         <label class="form-label">Пара для отметки:</label>
         <select id="detail-pair-select" class="ui-select" onchange="syncDetailModalValues()"></select>
       </div>
 
       <div class="form-group">
-        <label class="form-label">Статус присутствия:</label>
+        <label class="form-label">Статус присутствия на паре:</label>
         <div style="display: flex; gap: 6px;">
           <button id="btn-st-present" class="ui-btn btn-secondary btn-sm" style="flex:1;" onclick="setDetailStatus('PRESENT')">Есть</button>
           <button id="btn-st-sick" class="ui-btn btn-secondary btn-sm" style="flex:1;" onclick="setDetailStatus('SICK')">Болеет</button>
@@ -796,7 +840,7 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label">Комментарий преподавателя:</label>
+        <label class="form-label">Комментарий к текущей паре / теме:</label>
         <input type="text" id="detail-comment-input" class="ui-input" placeholder="Ответ у доски, опоздание, тема">
       </div>
 
@@ -834,6 +878,8 @@
       <div id="screen-rollcall-starosta-badge" style="display: none; margin-top: 4px;">
         <span class="badge-starosta">Староста группы</span>
       </div>
+      <!-- Постоянный комментарий при перекличке -->
+      <div id="screen-rollcall-note" class="student-permanent-note-badge" style="display: none;"></div>
     </div>
     <div class="screen-status-grid">
       <button class="btn-large-status btn-p" onclick="submitScreenStatus('PRESENT')">Есть</button>
@@ -855,6 +901,9 @@
       <div id="quiz-starosta-badge" style="display: none; margin-top: 4px;">
         <span class="badge-starosta">Староста группы</span>
       </div>
+      <!-- Постоянный комментарий при опросе -->
+      <div id="quiz-student-note" class="student-permanent-note-badge" style="display: none;"></div>
+
       <div class="grade-selector-row">
         <button class="btn-grade-chip" onclick="setQuizGrade(this, '5')">5</button>
         <button class="btn-grade-chip" onclick="setQuizGrade(this, '4')">4</button>
@@ -867,6 +916,31 @@
     <div style="display: flex; gap: 8px;">
       <button class="ui-btn btn-secondary" style="flex: 1;" onclick="skipQuizStudent()">Пропустить</button>
       <button class="ui-btn btn-primary" style="flex: 2;" onclick="saveAndNextQuiz()">Зафиксировать</button>
+    </div>
+  </div>
+
+  <!-- ВСПЛЫВАЮЩЕЕ ОКНО: ДЕТАЛИ ЯЧЕЙКИ В СВОДНОЙ ВЕДОМОСТИ -->
+  <div id="popup-consolidated-detail" class="popup-dialog-wrap">
+    <div class="popup-dialog">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+        <div style="font-size: 14px; font-weight: 700;">Сведения о занятии</div>
+        <button class="ui-btn btn-secondary btn-sm" onclick="closeConsolidatedCellDetail()">Закрыть</button>
+      </div>
+      <div style="margin-bottom: 10px;">
+        <div id="consolidated-modal-student" style="font-size: 15px; font-weight: 700;">ФИО</div>
+        <div id="consolidated-modal-note" style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px; display: none;"></div>
+      </div>
+      <div style="background: var(--bg-app); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; margin-bottom: 12px; font-size: 12.5px; line-height: 1.55;">
+        <div><b>Дата:</b> <span id="consolidated-modal-date"></span></div>
+        <div><b>Пара:</b> <span id="consolidated-modal-pair"></span></div>
+        <div><b>Посещаемость:</b> <span id="consolidated-modal-status"></span></div>
+        <div><b>Оценка:</b> <span id="consolidated-modal-grade" style="font-weight: 700; color: var(--accent);"></span></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" style="font-weight: 700;">Комментарий преподавателя к занятию:</label>
+        <div id="consolidated-modal-comment" style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: var(--radius-sm); padding: 10px; font-size: 13px; color: #92400E; min-height: 48px; white-space: pre-wrap;"></div>
+      </div>
+      <button class="ui-btn btn-primary" onclick="closeConsolidatedCellDetail()">Понятно</button>
     </div>
   </div>
 
@@ -950,7 +1024,7 @@ function fetchStore(storeName) {
 /* ================= ФОРМАТИРОВАНИЕ И УДАРЕНИЯ ================= */
 function escapeHtml(text) {
   if (!text) return '';
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function formatWordWithStress(word, stressIndex) {
@@ -1111,7 +1185,7 @@ function closeJournalWorkspace() {
 function removeLastPairFromCurrentSession() {
   if (activePairsCount <= 1) return showToast('Осталась только одна пара');
   const pairToRemove = activePairsCount;
-  
+
   if (!confirm(`Удалить пару ${pairToRemove} за ${formatDateShort(activeDate)}? Все оценки и отметки этой пары будут стёрты.`)) return;
 
   const txE = db.transaction('entries', 'readwrite');
@@ -1165,6 +1239,7 @@ function renderJournalWorkspaceTable() {
       tbody += `<td>
         <span style="font-weight: 600;">${formatNameWithStress(st)}</span>
         ${st.isStarosta ? '<span class="badge-starosta">Староста</span>' : ''}
+        ${st.note ? `<div style="font-size: 10px; color: var(--text-muted); font-weight: 500;">📌 ${escapeHtml(st.note)}</div>` : ''}
       </td>`;
 
       for (let p = 1; p <= activePairsCount; p++) {
@@ -1179,7 +1254,7 @@ function renderJournalWorkspaceTable() {
 
           const statusBadge = sLabel ? `<span class="cell-status-tag ${sClass}">${sLabel}</span>` : '';
           const gradeBadge = entry.grade ? `<span class="cell-grade">${entry.grade}</span>` : '';
-          const commentDot = entry.comment ? `<span class="cell-comment-dot" title="${entry.comment}"></span>` : '';
+          const commentDot = entry.comment ? `<span class="cell-comment-dot" title="${escapeHtml(entry.comment)}"></span>` : '';
           cellHtml = `${statusBadge}${gradeBadge}${commentDot}` || '—';
         }
         tbody += `<td style="text-align: center;">${cellHtml}</td>`;
@@ -1231,6 +1306,8 @@ function openStudentDetailModal(studentId) {
   const grp = groups.find(g => g.id === activeGroupId);
 
   renderDetailHeaderAndStress(st, grp);
+
+  document.getElementById('detail-student-note-input').value = st ? (st.note || '') : '';
 
   const pairSelect = document.getElementById('detail-pair-select');
   pairSelect.innerHTML = '';
@@ -1303,7 +1380,20 @@ function updateDetailGradeChips() {
 function saveStudentDetailModal() {
   const pair = parseInt(document.getElementById('detail-pair-select').value) || 1;
   const comment = document.getElementById('detail-comment-input').value.trim();
+  const permanentNote = document.getElementById('detail-student-note-input').value.trim();
 
+  // 1. Сохраняем постоянный комментарий к студенту
+  const st = students.find(s => s.id === detailCurrentStudentId);
+  if (st) {
+    st.note = permanentNote;
+    const txS = db.transaction('students', 'readwrite');
+    txS.objectStore('students').put(st);
+    txS.oncomplete = () => {
+      renderStudentsDirectory();
+    };
+  }
+
+  // 2. Сохраняем отметку/оценку/комментарий к конкретной паре
   saveEntryDirect(activeGroupId, detailCurrentStudentId, activeDate, pair, detailSelectedStatus, detailSelectedGrade, comment);
   closeStudentDetailModal();
   showToast('Данные сохранены');
@@ -1370,6 +1460,15 @@ function renderScreenRollCallStudent() {
   document.getElementById('screen-rollcall-group-lbl').innerText = grp ? grp.name : '';
   document.getElementById('screen-rollcall-name').innerHTML = formatNameWithStress(st);
   document.getElementById('screen-rollcall-starosta-badge').style.display = st.isStarosta ? 'block' : 'none';
+
+  // Постоянный комментарий к студенту на экране переклички
+  const noteEl = document.getElementById('screen-rollcall-note');
+  if (st.note && st.note.trim()) {
+    noteEl.innerHTML = `📌 <b>Заметка:</b> ${escapeHtml(st.note)}`;
+    noteEl.style.display = 'inline-flex';
+  } else {
+    noteEl.style.display = 'none';
+  }
 }
 
 function submitScreenStatus(status) {
@@ -1426,6 +1525,15 @@ function renderQuizScreenItem() {
   document.getElementById('quiz-pair-lbl').innerText = `Пара ${quizPair}`;
   document.getElementById('quiz-student-name').innerHTML = formatNameWithStress(st);
   document.getElementById('quiz-starosta-badge').style.display = st.isStarosta ? 'block' : 'none';
+
+  // Постоянный комментарий к студенту на экране опроса
+  const noteEl = document.getElementById('quiz-student-note');
+  if (st.note && st.note.trim()) {
+    noteEl.innerHTML = `📌 <b>Заметка:</b> ${escapeHtml(st.note)}`;
+    noteEl.style.display = 'inline-flex';
+  } else {
+    noteEl.style.display = 'none';
+  }
 
   quizSelectedGrade = '';
   document.querySelectorAll('#screen-quiz .btn-grade-chip').forEach(c => c.classList.remove('selected'));
@@ -1562,7 +1670,7 @@ function deleteArchivedSession(sessionId) {
   });
 }
 
-/* ================= СВОДНЫЙ ЖУРНАЛ ================= */
+/* ================= СВОДНЫЙ ЖУРНАЛ С ПОСТОЯННЫМИ ЗАМЕТКАМИ ================= */
 function renderFullConsolidatedJournal() {
   const gId = parseInt(document.getElementById('full-journal-group-select').value);
   const table = document.getElementById('full-consolidated-table');
@@ -1588,7 +1696,11 @@ function renderFullConsolidatedJournal() {
     }
   });
 
-  let thead = '<thead><tr><th style="width:26px;">№</th><th style="text-align:left; min-width:140px;">Обучающийся</th>';
+  // Шапка: сначала ФИО, затем Постоянная заметка к студенту, затем дни занятий
+  let thead = '<thead><tr>';
+  thead += '<th style="width:26px;">№</th>';
+  thead += '<th style="text-align:left; min-width:140px;">Обучающийся</th>';
+  thead += '<th style="text-align:left; min-width:150px; background:#F1F5F9;">Постоянная заметка</th>';
   colPairs.forEach(col => {
     thead += `<th style="width:65px; font-size:10px;">${formatDateShort(col.date)}<br>П${col.pair}</th>`;
   });
@@ -1599,24 +1711,77 @@ function renderFullConsolidatedJournal() {
     tbody += `<tr ${st.isStarosta ? 'class="starosta-row"' : ''}>`;
     tbody += `<td style="text-align:center; color:var(--text-muted);">${idx + 1}</td>`;
     tbody += `<td><span style="font-weight:600;">${formatNameWithStress(st)}</span> ${st.isStarosta ? '<span class="badge-starosta">Староста</span>' : ''}</td>`;
+    
+    // Колонка постоянного комментария к студенту
+    const studentNoteHtml = st.note ? `<span style="color:#1E3A8A; font-weight:600;">${escapeHtml(st.note)}</span>` : '<span style="color:var(--text-light);">—</span>';
+    tbody += `<td style="font-size:11.5px; white-space:normal; line-height:1.3; max-width:180px;">${studentNoteHtml}</td>`;
 
+    // Ячейки по парам
     colPairs.forEach(col => {
       const e = getEntry(gId, st.id, col.date, col.pair);
-      let cell = '—';
+      let cellText = '—';
+      let hasComment = false;
+
       if (e) {
         let s = '';
         if (e.status === 'PRESENT') s = 'Я';
         else if (e.status === 'SICK') s = 'Б';
         else if (e.status === 'ABSENT') s = 'Н';
-        cell = `${s} ${e.grade || ''}`.trim() || '—';
+        cellText = `${s} ${e.grade || ''}`.trim() || '—';
+
+        if (e.comment && e.comment.trim() !== '') {
+          hasComment = true;
+        }
       }
-      tbody += `<td style="text-align:center; font-size:11px;">${cell}</td>`;
+
+      if (hasComment) {
+        // Подсвеченная ячейка с вызовом диалога деталей
+        tbody += `<td class="cell-with-note" onclick="openConsolidatedCellDetail(${gId}, ${st.id}, '${col.date}', ${col.pair})" style="text-align:center; font-size:11px;" title="Комментарий к паре: ${escapeHtml(e.comment)}">${cellText} 💬</td>`;
+      } else {
+        tbody += `<td style="text-align:center; font-size:11px;">${cellText}</td>`;
+      }
     });
+
     tbody += '</tr>';
   });
   tbody += '</tbody>';
 
   table.innerHTML = thead + tbody;
+}
+
+/* Всплывающее окно деталей ячейки сводного журнала */
+function openConsolidatedCellDetail(groupId, studentId, date, pair) {
+  const st = students.find(s => s.id === studentId);
+  const entry = getEntry(groupId, studentId, date, pair);
+  if (!st || !entry) return;
+
+  document.getElementById('consolidated-modal-student').innerHTML = `${formatNameWithStress(st)} ${st.isStarosta ? '<span class="badge-starosta">Староста</span>' : ''}`;
+  
+  const noteEl = document.getElementById('consolidated-modal-note');
+  if (st.note && st.note.trim()) {
+    noteEl.innerHTML = `📌 <b>Постоянная заметка:</b> ${escapeHtml(st.note)}`;
+    noteEl.style.display = 'block';
+  } else {
+    noteEl.style.display = 'none';
+  }
+
+  document.getElementById('consolidated-modal-date').innerText = `${formatDateShort(date)} (${date})`;
+  document.getElementById('consolidated-modal-pair').innerText = `Пара ${pair}`;
+
+  let statusText = 'Не отмечено';
+  if (entry.status === 'PRESENT') statusText = 'Присутствует (Я)';
+  else if (entry.status === 'SICK') statusText = 'Болеет (Б)';
+  else if (entry.status === 'ABSENT') statusText = 'Отсутствует (Н)';
+  document.getElementById('consolidated-modal-status').innerText = statusText;
+
+  document.getElementById('consolidated-modal-grade').innerText = entry.grade ? entry.grade : 'Нет оценки';
+  document.getElementById('consolidated-modal-comment').innerText = entry.comment ? entry.comment : 'Комментарий преподавателя отсутствует';
+
+  document.getElementById('popup-consolidated-detail').classList.add('active');
+}
+
+function closeConsolidatedCellDetail() {
+  document.getElementById('popup-consolidated-detail').classList.remove('active');
 }
 
 /* ================= БЫСТРЫЙ ВВОД ================= */
@@ -1631,6 +1796,7 @@ function setupEnterKeyBindings() {
 
   const lastNameInput = document.getElementById('new-student-lastname');
   const firstNameInput = document.getElementById('new-student-firstname');
+  const noteInput = document.getElementById('new-student-note');
   const socialInput = document.getElementById('new-student-social');
 
   lastNameInput.addEventListener('keydown', (e) => {
@@ -1643,6 +1809,13 @@ function setupEnterKeyBindings() {
   });
 
   firstNameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      noteInput.focus();
+    }
+  });
+
+  noteInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       socialInput.focus();
@@ -1678,11 +1851,13 @@ function addNewStudent() {
   const gId = parseInt(document.getElementById('student-bind-group').value);
   const lastNameInput = document.getElementById('new-student-lastname');
   const firstNameInput = document.getElementById('new-student-firstname');
+  const noteInput = document.getElementById('new-student-note');
   const socialInput = document.getElementById('new-student-social');
   const starostaBox = document.getElementById('new-student-starosta');
 
   const lastName = lastNameInput.value.trim();
   const firstName = firstNameInput.value.trim();
+  const note = noteInput.value.trim();
   const social = socialInput.value.trim();
   const isStarosta = starostaBox.checked;
 
@@ -1697,6 +1872,7 @@ function addNewStudent() {
     lastName: lastName,
     firstName: firstName,
     name: fullName,
+    note: note,
     socialUrl: social,
     isStarosta: isStarosta,
     stressIndex: newStudentStressIndex
@@ -1708,6 +1884,7 @@ function addNewStudent() {
     students.push(newS);
     lastNameInput.value = '';
     firstNameInput.value = '';
+    noteInput.value = '';
     socialInput.value = '';
     starostaBox.checked = false;
     newStudentStressIndex = null;
@@ -1737,12 +1914,13 @@ function renderStudentsDirectory() {
     const item = document.createElement('div');
     item.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border);';
     item.innerHTML = `
-      <div>
+      <div style="flex:1; padding-right:8px;">
         <div style="font-size:13px; font-weight:600;">
           ${idx + 1}. ${formatNameWithStress(s)}
           ${s.isStarosta ? '<span class="badge-starosta">Староста</span>' : ''}
         </div>
-        ${s.socialUrl ? `<a href="${s.socialUrl}" target="_blank" style="font-size:11px; color:var(--accent); text-decoration:none;">Профиль сети</a>` : ''}
+        ${s.note ? `<div style="font-size:11px; color:#1E3A8A; margin-top:2px;">📌 ${escapeHtml(s.note)}</div>` : ''}
+        ${s.socialUrl ? `<a href="${s.socialUrl}" target="_blank" style="font-size:11px; color:var(--accent); text-decoration:none; display:inline-block; margin-top:2px;">Профиль сети</a>` : ''}
       </div>
       <button class="ui-btn btn-danger btn-sm" onclick="deleteStudent(${s.id})">Удалить</button>
     `;
@@ -1809,11 +1987,9 @@ async function autoSyncToBoundFolder() {
   }
 }
 
-/* Генератор архива папок без внешних библиотек */
 function exportStructuredZipFolders() {
   if (groups.length === 0) return showToast('Нет групп для экспорта');
 
-  // Формируем структурированный пакет файлов в виде виртуальной файловой системы
   const exportPackage = {
     exportedAt: new Date().toISOString(),
     groupsStructure: {}
@@ -1848,7 +2024,7 @@ function generateGroupSummaryText(grp, grpStudents, grpSessions, grpEntries) {
   txt += `Проведено занятий: ${grpSessions.length}\n\n`;
   txt += `СПИСОК ОБУЧАЮЩИХСЯ:\n`;
   grpStudents.forEach((s, idx) => {
-    txt += `${idx + 1}. ${s.name} ${s.isStarosta ? '[Староста]' : ''} ${s.socialUrl ? '(' + s.socialUrl + ')' : ''}\n`;
+    txt += `${idx + 1}. ${s.name} ${s.isStarosta ? '[Староста]' : ''} ${s.note ? '[Заметка: ' + s.note + ']' : ''} ${s.socialUrl ? '(' + s.socialUrl + ')' : ''}\n`;
   });
   txt += `\nИСТОРИЯ ЗАНЯТИЙ:\n`;
   grpSessions.forEach(sess => {
@@ -1937,6 +2113,7 @@ function exportWordReport() {
           <th style="width: 25px;">№</th>
           <th style="text-align: left;">ФИО обучающегося</th>
           <th style="width: 70px;">Роль</th>
+          <th style="text-align: left; width: 120px;">Постоянная заметка</th>
   `;
 
   for (let p = 1; p <= activePairsCount; p++) {
@@ -1949,6 +2126,7 @@ function exportWordReport() {
     docHTML += `<td class="text-center">${idx + 1}</td>`;
     docHTML += `<td>${st.name}</td>`;
     docHTML += `<td class="text-center">${st.isStarosta ? 'Староста' : 'Студент'}</td>`;
+    docHTML += `<td>${st.note || '—'}</td>`;
 
     let notes = [];
     for (let p = 1; p <= activePairsCount; p++) {
@@ -1988,7 +2166,7 @@ function exportWordReport() {
 }
 
 function exportJSONBackup() {
-  const data = { groups, students, entries, sessions, version: 6 };
+  const data = { groups, students, entries, sessions, version: 7 };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -2041,11 +2219,21 @@ function handleImportJSON(e) {
 function loadSampleData() {
   const sampleGroup = { id: 101, name: 'ИТ-21' };
   const sampleStudents = [
-    { id: 1, groupId: 101, lastName: 'Смирнов', firstName: 'Дмитрий Сергеевич', name: 'Смирнов Дмитрий Сергеевич', isStarosta: true, socialUrl: 'https://t.me', stressIndex: 5 },
-    { id: 2, groupId: 101, lastName: 'Алексеева', firstName: 'Екатерина Ильинична', name: 'Алексеева Екатерина Ильинична', isStarosta: false, socialUrl: '', stressIndex: 6 },
-    { id: 3, groupId: 101, lastName: 'Васильев', firstName: 'Максим Андреевич', name: 'Васильев Максим Андреевич', isStarosta: false, socialUrl: '', stressIndex: 1 },
-    { id: 4, groupId: 101, lastName: 'Кузнецова', firstName: 'Анна Павловна', name: 'Кузнецова Анна Павловна', isStarosta: false, socialUrl: '', stressIndex: 6 },
-    { id: 5, groupId: 101, lastName: 'Новиков', firstName: 'Артем Денисович', name: 'Новиков Артем Денисович', isStarosta: false, socialUrl: '', stressIndex: 3 }
+    { id: 1, groupId: 101, lastName: 'Смирнов', firstName: 'Дмитрий Сергеевич', name: 'Смирнов Дмитрий Сергеевич', isStarosta: true, socialUrl: 'https://t.me', stressIndex: 5, note: 'Староста группы, связь по расписанию' },
+    { id: 2, groupId: 101, lastName: 'Алексеева', firstName: 'Екатерина Ильинична', name: 'Алексеева Екатерина Ильинична', isStarosta: false, socialUrl: '', stressIndex: 6, note: 'Слабое зрение (первые парты)' },
+    { id: 3, groupId: 101, lastName: 'Васильев', firstName: 'Максим Андреевич', name: 'Васильев Максим Андреевич', isStarosta: false, socialUrl: '', stressIndex: 1, note: 'Индивидуальный график, сдача проекта' },
+    { id: 4, groupId: 101, lastName: 'Кузнецова', firstName: 'Анна Павловна', name: 'Кузнецова Анна Павловна', isStarosta: false, socialUrl: '', stressIndex: 6, note: '' },
+    { id: 5, groupId: 101, lastName: 'Новиков', firstName: 'Артем Денисович', name: 'Новиков Артем Денисович', isStarosta: false, socialUrl: '', stressIndex: 3, note: 'Уточнить допуск к практическим работам' }
+  ];
+
+  const today = new Date().toISOString().split('T')[0];
+  const sampleSession = { id: `101_${today}`, groupId: 101, date: today, pairsCount: 2 };
+  const sampleEntries = [
+    { id: 1001, groupId: 101, studentId: 1, date: today, pair: 1, status: 'PRESENT', grade: '5', comment: 'Отличный ответ у доски по теме' },
+    { id: 1002, groupId: 101, studentId: 2, date: today, pair: 1, status: 'PRESENT', grade: '4', comment: '' },
+    { id: 1003, groupId: 101, studentId: 3, date: today, pair: 1, status: 'PRESENT', grade: '3', comment: 'Неполный ответ, выдан дополнительный чертеж' },
+    { id: 1004, groupId: 101, studentId: 4, date: today, pair: 1, status: 'SICK', grade: '', comment: 'Справка до пятницы' },
+    { id: 1005, groupId: 101, studentId: 5, date: today, pair: 1, status: 'ABSENT', grade: '', comment: '' }
   ];
 
   const txG = db.transaction('groups', 'readwrite');
@@ -2054,12 +2242,20 @@ function loadSampleData() {
   const txS = db.transaction('students', 'readwrite');
   sampleStudents.forEach(s => txS.objectStore('students').put(s));
 
+  const txSess = db.transaction('sessions', 'readwrite');
+  txSess.objectStore('sessions').put(sampleSession);
+
+  const txE = db.transaction('entries', 'readwrite');
+  sampleEntries.forEach(e => txE.objectStore('entries').put(e));
+
   Promise.all([
     new Promise(r => txG.oncomplete = r),
-    new Promise(r => txS.oncomplete = r)
+    new Promise(r => txS.oncomplete = r),
+    new Promise(r => txSess.oncomplete = r),
+    new Promise(r => txE.oncomplete = r)
   ]).then(() => {
     loadAllData();
-    showToast('Тестовая группа ИТ-21 загружена');
+    showToast('Тестовая группа ИТ-21 и занятия загружены');
     autoSyncToBoundFolder();
   });
 }
